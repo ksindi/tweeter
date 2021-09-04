@@ -2,9 +2,13 @@
 
 Archive and search your tweets and liked tweets using AWS Lambda, DynamoDB and Elasticsearch.
 
-<img src="images/screenshot.png" width="600">
+<img src="images/screenshot.png" width="800">
 
 *Note: this project is primarily being used a test bed for figuring out best practices with AWS Lambda*
+
+## Architecture
+
+<img src="images/architecture.png" width="800">
 
 ## Requirements
 
