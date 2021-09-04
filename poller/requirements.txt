@@ -1,0 +1,4 @@
+aws-lambda-powertools
+boto3
+elastic-enterprise-search
+tweepy

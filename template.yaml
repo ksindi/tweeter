@@ -1,0 +1,162 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+    A serverless app that periodically polls the public Twitter API
+    and archives tweets.
+
+Parameters:
+  ESHost:
+    Type: String
+    Description: Host of Elasticsearch App Search
+  Environment:
+    Type: String
+    AllowedValues:
+      - staging
+      - prod
+  ScreenName:
+    Type: String
+    Description: Non-URL-encoded search text poller should use when querying Twitter Search API.
+  SSMParameterName:
+    Type: String
+    Default: 'tweeter'
+    Description: >
+      This app assumes API keys needed to use the Twitter API are stored as SecureStrings in SSM Parameter Store under the prefix defined by
+      this parameter. See the app README for details.
+  PollingFrequencyInMinutes:
+    Type: Number
+    MinValue: 1
+    Default: 10
+    Description: Frequency in minutes to poll for more tweets.
+  BatchSize:
+    Type: Number
+    MinValue: 1
+    Default: 15
+    Description: Max number of tweets to save before checkpointing.
+  StreamModeEnabled:
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+    Description: If true, the app will remember the last tweet found and only invoke the tweet processor function for newer tweets. If false, the app will be stateless and invoke the tweet processor function with all tweets found in each polling cycle.
+
+Globals:
+  Function:
+    Timeout: 900
+    MemorySize: 128
+    Runtime: python3.8
+    Tracing: Active
+    Tags:
+      LambdaPowertools: python
+    Layers:
+      - !Ref SSMStoreLayer
+    Environment:
+      Variables:
+        APP_ENV: !Ref Environment
+        LOG_LEVEL: INFO
+        POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+        POWERTOOLS_LOGGER_LOG_EVENT: true
+        POWERTOOLS_METRICS_NAMESPACE: TweeterApplication
+        POWERTOOLS_SERVICE_NAME: tweeter
+
+Conditions:
+  IsPollingFrequencyInMinutesSingular: !Equals [!Ref PollingFrequencyInMinutes, 1]
+
+Resources:
+  SSMStoreLayer:
+    Type: 'AWS::Serverless::LayerVersion'
+    Properties:
+      LayerName: ssm-store
+      Description: Package for easily getting secrets from AWS SSM
+      ContentUri: ./layers/ssm_store/
+      CompatibleRuntimes:
+        - python3.8
+      RetentionPolicy: Delete
+    Metadata:
+      BuildMethod: python3.8
+
+  TweeterPoller:
+    Type: AWS::Serverless::Function
+    DependsOn: TweetsTable
+    Properties:
+      Handler: app.lambda_handler
+      CodeUri: poller/
+      Description: Tweeter function
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TimelineCheckpoint
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TweetsTable
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub '${SSMParameterName}*'
+      Environment:
+        Variables:
+          BATCH_SIZE: !Ref BatchSize
+          ENVIRONMENT: !Ref Environment
+          SCREEN_NAME: !Ref ScreenName
+          SSM_PARAMETER_NAME: !Ref SSMParameterName
+          STREAM_MODE_ENABLED: !Ref StreamModeEnabled
+          TIMELINE_CHECKPOINT_TABLE_NAME: !Ref TimelineCheckpoint
+          TWEETS_TABLE_NAME: TweetsTable
+      Events:
+        Timer:
+          Type: Schedule
+          Properties:
+            Schedule: !If [IsPollingFrequencyInMinutesSingular, !Sub 'rate(${PollingFrequencyInMinutes} minute)', !Sub 'rate(${PollingFrequencyInMinutes} minutes)']
+
+  TweeterIndexer:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.lambda_handler
+      CodeUri: indexer/
+      Description: Tweeter function
+      Policies:
+        - AWSLambdaDynamoDBExecutionRole
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub '${SSMParameterName}*'
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          ES_HOST: !Ref ESHost
+          SSM_PARAMETER_NAME: !Ref SSMParameterName
+      Events:
+        Stream:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt TweetsTable.StreamArn
+            BatchSize: 100
+            MaximumBatchingWindowInSeconds: 2  # seconds
+            StartingPosition: TRIM_HORIZON
+
+  TimelineCheckpoint:
+    Type: AWS::Serverless::SimpleTable
+
+  TweetsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: TweetsTable
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: N
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 20
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+
+Outputs:
+  TweeterPollerFunctionName:
+    Value: !Ref TweeterPoller
+  TweeterPollerFunctionArn:
+    Value: !GetAtt TweeterPoller.Arn
+  TweeterIndexerFunctionName:
+    Value: !Ref TweeterIndexer
+  TweeterIndexerFunctionArn:
+    Value: !GetAtt TweeterIndexer.Arn
+  TimelineCheckpointTableName:
+    Value: !Ref TimelineCheckpoint
+  TimelineCheckpointTableArn:
+    Value: !GetAtt TimelineCheckpoint.Arn

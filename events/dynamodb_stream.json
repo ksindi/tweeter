@@ -1,0 +1,43 @@
+{
+  "Records":[
+    {
+      "eventID":"8accd54f9d4dd8b946c6d8bab0bfcd34",
+      "eventName":"INSERT",
+      "eventVersion":"1.1",
+      "eventSource":"aws:dynamodb",
+      "awsRegion":"us-east-1",
+      "dynamodb":{
+        "ApproximateCreationDateTime":1630533821,
+        "Keys":{
+          "id":{
+            "N":"1433187122505211915"
+          }
+        },
+        "NewImage":{
+          "full_text":{
+            "S":"This post covers a technical milestone where the @Parsely real-time data pipeline &amp; underlying cloud APIs are being flipped on for almost all @WordPressVIP customers.\n\nThis was a core thesis of the acquisition and the result of a fun collaboration between me and @eduardolundgren. https://t.co/gJs0d1suyT"
+          },
+          "created_at":{
+            "S":"2021-09-01T21:56:51"
+          },
+          "source_type":{
+            "S":"liked"
+          },
+          "id":{
+            "N":"1433187122505211915"
+          },
+          "original_author":{
+            "S":"Andrew Montalenti"
+          },
+          "url":{
+            "S":"https://twitter.com/amontalenti/status/1433187122505211915"
+          }
+        },
+        "SequenceNumber":"5663100000000011022548215",
+        "SizeBytes":481,
+        "StreamViewType":"NEW_IMAGE"
+      },
+      "eventSourceARN":"arn:aws:dynamodb:us-east-1:045535688505:table/TweetsTable/stream/2021-08-31T16:37:23.802"
+    }
+  ]
+}

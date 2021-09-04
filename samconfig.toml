@@ -1,0 +1,29 @@
+version=0.1
+[default]
+[default.build.parameters]
+cached="true"
+parallel="true"
+use_container="true"
+[default.local_invoke.parameters]
+parameter_overrides=[
+  "Environment=local",
+  "ESHost=https://tweeter.ent.us-east-2.aws.elastic-cloud.com",
+  "StreamModeEnabled=false",
+  "ScreenName=kamilsindi"
+]
+
+[prod]
+[prod.deploy]
+[prod.deploy.parameters]
+stack_name="tweeter"
+parameter_overrides=[
+  "Environment=prod",
+  "ESHost=https://tweeter.ent.us-east-2.aws.elastic-cloud.com",
+  "StreamModeEnabled=true",
+  "PollingFrequencyInMinutes=1",
+  "ScreenName=kamilsindi"
+]
+s3_bucket="aws-sam-cli-managed-default-samclisourcebucket-1fowu1xr1lsfc"
+s3_prefix="tweeter"
+region="us-east-1"
+capabilities="CAPABILITY_IAM"

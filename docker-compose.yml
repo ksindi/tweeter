@@ -1,0 +1,42 @@
+version: "3"
+services:
+  localstack:
+    image: "localstack/localstack"
+    ports:
+      - "4566-4567:4566-4567"  # reserve ports for other services
+    environment:
+      - SERVICES=dynamodb:4569
+      - DEBUG=${DEBUG- }
+      - TZ=America/New_York
+      - DEFAULT_REGION=us-east-1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - HOST_TMP_FOLDER=${TMPDIR}
+    volumes:
+      - "${TMPDIR:-/tmp/localstack}:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - tweeter_network
+
+  setup-resources:
+    image: amazon/aws-cli
+    environment:
+      - AWS_ACCESS_KEY_ID=dummyaccess
+      - AWS_SECRET_ACCESS_KEY=dummysecret
+      - AWS_DEFAULT_REGION=us-east-1
+    entrypoint: /bin/sh -c
+    command: >
+      "
+        # Needed so all localstack components will startup correctly
+        sleep 10;
+        aws dynamodb create-table --endpoint-url=http://localstack:4566 --table-name TweetsTable \
+          --attribute-definitions AttributeName=id,AttributeType=N \
+          --key-schema AttributeName=id,KeyType=HASH \
+          --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1;
+      "
+    networks:
+      - tweeter_network
+    depends_on:
+      - localstack
+
+networks:
+  tweeter_network:

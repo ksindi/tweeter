@@ -1,0 +1,23 @@
+{
+  "engineName": "tweeter",
+  "endpointBase": "https://tweeter.ent.us-east-2.aws.elastic-cloud.com",
+  "searchKey": "search-g3hkgcb2gqktn4ugp1qh6h66",
+  "resultFields": [
+    "full_text",
+    "created_at",
+    "updated_at",
+    "source_type",
+    "original_author",
+    "url",
+    "id"
+  ],
+  "sortFields": [
+    "created_at"
+  ],
+  "facets": [
+    "original_author",
+    "source_type"
+  ],
+  "titleField": "full_text",
+  "urlField": "url"
+}

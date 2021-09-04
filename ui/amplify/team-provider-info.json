@@ -1,0 +1,23 @@
+{
+  "prod": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-tweeter-prod-131115-authRole",
+      "UnauthRoleArn": "arn:aws:iam::045535688505:role/amplify-tweeter-prod-131115-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::045535688505:role/amplify-tweeter-prod-131115-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-tweeter-prod-131115-deployment",
+      "UnauthRoleName": "amplify-tweeter-prod-131115-unauthRole",
+      "StackName": "amplify-tweeter-prod-131115",
+      "StackId": "arn:aws:cloudformation:us-east-1:045535688505:stack/amplify-tweeter-prod-131115/4a9063b0-09b5-11ec-aeda-0acfa743837d",
+      "AmplifyAppId": "di26xc7abuys2"
+    },
+    "categories": {
+      "hosting": {
+        "amplifyhosting": {
+          "appId": "di26xc7abuys2",
+          "type": "cicd"
+        }
+      }
+    }
+  }
+}

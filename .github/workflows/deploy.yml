@@ -1,0 +1,26 @@
+name: SAM Validate, Build, Test, Deploy
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+      - uses: aws-actions/setup-sam@v1
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      # Build inside Docker containers
+      - run: sam build --config-file samconfig.toml --use-container
+
+      # Run Unit tests- Specify unit tests here
+
+      # Sam deploy
+      - run: sam deploy --config-file samconfig.toml --no-confirm-changeset --no-fail-on-empty-changeset --config-env prod
